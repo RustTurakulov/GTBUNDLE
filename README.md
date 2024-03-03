@@ -1,2 +1,53 @@
 # GTBUNDLE
 GTBUNDLE - Genotyping and Methylation Array Content Search
+
+GTBUNDLE is a Shiny web application designed to provide users with a friendly interface for searching, comparing, and analyzing the content of two Illumina's mainstream genotyping and methylation chips: GDA and EPICv2.
+
+
+##GT CHIPS - Genotyping and Methylation Array Content Search**
+
+###Deployment and Running Instructions:
+
+Clone the Repository: Begin by cloning the GT CHIPS GitHub repository to your local machine using the following command:
+
+Copy code
+```
+git clone https://github.com/RustTurakulov/GTBUNDLE.git
+```
+
+Navigate to the App Directory: After cloning the repository, navigate to the GTBUNDLE directory, which contains the Shiny web application files.
+
+Install Required Packages: Before running the application, ensure that you have the necessary R packages installed. You can install the required packages by running the following command in your R environment:
+
+```
+R
+install.packages(c("dplyr", "tidyr", "shiny", "shinyjs", "ggplot2", "gridExtra", "data.table", "DT", "kableExtra", "formattable", "UpSetR", "ComplexHeatmap"))
+```
+
+Run the Application: Once the required packages are installed, you can run the Shiny web application using the following command in your R environment:
+
+
+```
+R
+shiny::runApp("GTBUNDLE")
+```
+
+
+Access the Application: After running the above command, the application will start running locally. You can access the application by opening a web browser and navigating to the following URL:
+
+```
+Copy code
+http://127.0.0.1:XXXX
+```
+
+Replace XXXX with the port number displayed in your R console where the application is running.
+
+Interact with the Application: You can now interact with the GT CHIPS application in your web browser. The application provides three main tabs: 'Genes', 'SNPs', and 'Info', each offering different functionalities for searching, comparing, and analyzing the content of Illumina's genotyping and methylation microarrays.
+
+Explore and Analyze: Explore the various features of the application, including searching for gene and SNP IDs, generating bar plots and heatmaps, and accessing summary information about the microarray content.
+
+**Note:** _This Shiny application is provided for generalized informational and demonstration purposes. Users should independently verify the accuracy and reliability of the data presented and exercise their own judgment when interpreting the results._
+
+
+
+![Image](https://github.com/users/RustTurakulov/projects/1/assets/72537644/534ca8f4-2a1d-4ee4-8205-dcaededdb96b)
