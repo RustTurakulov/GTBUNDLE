@@ -4,9 +4,9 @@ GTBUNDLE - Genotyping and Methylation Array Content Search
 GTBUNDLE is a Shiny web application designed to provide users with a friendly interface for searching, comparing, and analyzing the content of two Illumina's mainstream genotyping and methylation chips: GDA and EPICv2.
 
 
-##GT CHIPS - Genotyping and Methylation Array Content Search**
+## GT CHIPS - Genotyping and Methylation Array Content Search**
 
-###Deployment and Running Instructions:
+### Deployment and Running Instructions:
 
 Clone the Repository: Begin by cloning the GT CHIPS GitHub repository to your local machine using the following command:
 
@@ -24,7 +24,9 @@ R
 install.packages(c("dplyr", "tidyr", "shiny", "shinyjs", "ggplot2", "gridExtra", "data.table", "DT", "kableExtra", "formattable", "UpSetR", "ComplexHeatmap"))
 ```
 
-Run the Application: Once the required packages are installed, you can run the Shiny web application using the following command in your R environment:
+### Run the Application: 
+
+Once the required packages are installed, you can run the Shiny web application using the following command in your R environment:
 
 
 ```
