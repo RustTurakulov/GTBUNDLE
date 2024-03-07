@@ -49,3 +49,16 @@ Explore and Analyze: Explore the various features of the application, including 
 
 
 ![Image](https://github.com/users/RustTurakulov/projects/1/assets/72537644/534ca8f4-2a1d-4ee4-8205-dcaededdb96b)
+
+
+---
+## Docker container is available
+I have docker container ready to go for this aplication. You have to get `docker` running on local system then just call it:
+```
+docker run -p 80:3838 --rm --name shiny trust1/shiny:v0.1 sh -c '/init'
+```
+Then gop to the internet browser and on the page address simply type
+```
+localhost
+```
+Docker repository info is here: [trust1/shiny](https://hub.docker.com/repository/docker/trust1/shiny/general)
