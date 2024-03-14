@@ -11,12 +11,24 @@ library("formattable");
 library(UpSetR);
 library(ComplexHeatmap);
 
+## Big annotation files are choking shiny! plain csv files  too big for github
+## use pigz to speedup the load of default gz compressed rds tables
+readRDS.gz <- function(file) {
+  pigzAvail <- !(Sys.which("pigz")=="")
+  if (pigzAvail) {
+    con    <- pipe(paste0("pigz -d -c -p", 4, " ", file))
+    object <- base::readRDS(file = con)
+    close(con)
+  } else {
+    warning("pigz is not available. Falling back to regular readRDS()")
+    object <- readRDS(file)
+  }
+  return(object)
+}
 
-hg19gda  <- readRDS("hg19_GDA.rds");
-#ahg19epic <- readRDS("hg19_EPIC.rds");
-hg19       <- hg19gda; 
-hg19$epic  <- readRDS("hg19_EPIC.long.rds")
-#hg19 <- c(hg19gda, hg19epic)
+hg19       <- readRDS.gz("hg19_GDA.rds");
+hg19$epic  <- readRDS.gz("hg19_EPIC.long.rds")
+
 
 GDA  <- setDT(hg19$gdav1);
 EPIC <- setDT(hg19$epic);
