@@ -555,7 +555,7 @@ server <- function(input, output) {
            tags$ol(
                 tags$strong("Developers:"),
                 tags$ul(
-                  tags$li("Rust Turakulov: rust@agrf.org.au "),
+                  tags$li("Rust Turakulov: rust.turakulov@agrf.org.au "),
                   tags$li("Lesley Gray: lesley.gray@agrf.org.au ")
                 ),
                 tags$strong("Genotyping team:"),
