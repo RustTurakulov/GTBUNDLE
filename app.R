@@ -10,6 +10,7 @@ library(kableExtra);
 library(formattable);
 library(UpSetR);
 library(ComplexHeatmap);
+library(bslib);
 
 
 hg19gda  <- readRDS("hg19_GDA.rds");
@@ -124,20 +125,37 @@ search_snps_table <- function(hg19, snp_ids) {
 }
 
 
+# Add cosmo theme and customise for AGRF with CSS
+agrf <- bs_theme(version=4, bootswatch="cosmo") %>%
+  bs_add_rules(list(sass::sass_file("www/bootstrap.scss")))
 
 
 
 # Define UI #####################################################
-ui <- navbarPage(
-    tags$style(HTML("
-           table.table-striped {
+ui <- fluidPage(  
+  theme = agrf,
+  useShinyjs(),
+  
+  # Add banner 
+  headerPanel(
+      column(width = 12,align="center", div(style = "height: 0px; position: relative; margin-left: auto; margin-right: auto;"),
+             tags$img(src = "agrflogo.png", width="18%", height="100%"))
+  ),
+  
+  # Add double Helix banner
+  titlePanel(h2(id = "myfancybanner", class="fancybanner", 
+                style = "height: 40px; margin-top: 60px; position: fixed; width: 100%; right:0;",
+                tags$img(src = "agrfwebbanner.png"),
+  )),
+  
+  navbarPage(
+    tags$style(HTML("table.table-striped {
                 width: 100% !important;
                 margin-left: 0 !important; /* Align table to the left */
                 padding: 0 !important; /* Remove any padding */
                 margin-right: 0 !important; /* Remove any right margin */                
             }
          ")),
-
   
   title = tags$span(imageOutput("logo", height = "10", inline = FALSE), " GT CHIPS ", style = "color: white; font-size: 2px; font-weight: regular;"),
   
@@ -145,34 +163,44 @@ ui <- navbarPage(
 #           imageOutput("logo", height = "10", inline = TRUE),
            sidebarLayout(
              sidebarPanel(
-               style = "height: 275px;",
+               #style = "height: 275px;",
+               style = "height: auto; width: 12, margin-top: 20; margin-bottom: 200",
                h5("Enter refSeq gene id(s) into the field separated by commas. Note the search is case sensitive."),
                textInput("geneInput", "Enter Gene(s):", ""),
-               actionButton("plotButton", "Generate plots"),
+               actionButton("plotButton", "Generate plots", style="color: #fff; background-color: #75787B; border-color: #FFFFFF; margin-bottom: 100px;",),
                
                br(),
                tableOutput("smalltable"),
+               hidden(
+                 p(id = "smalltable")),
                hr(),
                
                uiOutput("dynamicPlotHeight"),
                plotOutput("barsPlots", height = 300)
              ),
-             mainPanel(
-               h4(a("UpSetR  diagram", href = "https://upset.app/")),
-               column(width = 12, align = "left", 
-                      plotOutput("venDiagram", width = "100%", height = "450px") 
+             div(id = "main",
+                 
+             # This styling stops images from pushing underneath sidebar
+             mainPanel(width = 12, style = "margin-right: -200px;  position: absolute",
+               h4(a("UpSetR  diagram", href = "https://upset.app/", style = "margin-top: 20px; margin-bottom: 20px)")),
+               column(8, align = "left", 
+                      plotOutput("venDiagram", width = "80%", height = "300px")
                ),
                
                br(),
                hr(),
                h4("Table with all matched SNPs detected in all selected genes"),
-               DTOutput("longtable")
+               column(8, align = "left", 
+                     style = "height: 0px; margin-left: 0; margin-right: -200px;",
+               DTOutput("longtable"))
              ),
              fluid = FALSE
+             ) %>% shinyjs::hidden()
            )),
   tabPanel("SNPs",
            sidebarLayout(
              sidebarPanel(
+               style = "height: auto; width: 12, margin-top: 20;",
                textAreaInput("manualInput", "Enter SNPs ID manually", ""),
                hr(),
                fileInput("file", "Upload SNP file (one rs-id per row)"),
@@ -184,7 +212,6 @@ ui <- navbarPage(
                
                br(),
                hr(),
-               
                
                plotOutput("heatmap_plot", height = 600)
              ),
@@ -199,7 +226,7 @@ ui <- navbarPage(
                h4("Table with all matched SNPs detected in all selected genes"),
                DTOutput("snpstable"),
 
-             )
+             ) 
            )
   ),
   tabPanel("Info", 
@@ -234,7 +261,7 @@ ui <- navbarPage(
           ")
          )
        )
-))
+)))
 
 # Create reactive expressions
 barPlots           <- reactiveVal(NULL)
@@ -245,7 +272,7 @@ SNPSRESULTS        <- reactiveVal(NULL)
 # Define server logic
 server <- function(input, output) {
   shinyjs::useShinyjs()
-
+  
   output$logo <- renderImage({
     list(src = "agrflogo.png",  width = "220px", height = "50px", alt = "logo")
   }, deleteFile = FALSE);
@@ -433,6 +460,9 @@ server <- function(input, output) {
   })     
   
   observeEvent(input$plotButton, {
+    shinyjs::toggle("main")
+    hide("myfancybanner")
+    
     genes <- unique(unlist(strsplit(input$geneInput, "\\s*,\\s*")))
     
     # Clear individual plots and tables before generating new 
@@ -522,7 +552,7 @@ server <- function(input, output) {
     } else {
       plot(NULL, xlim = c(0, 1), ylim = c(0, 1), axes = FALSE, ann = FALSE)
     }
-  })
+  }, bg = "transparent")
   
   output$smalltable <- renderTable({
     flattened_SEARCHRESULTS <- if (!is.null(all_SEARCHRESULTS())) {
