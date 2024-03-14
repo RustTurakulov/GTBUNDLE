@@ -11,6 +11,14 @@ library("formattable");
 library(UpSetR);
 library(ComplexHeatmap);
 
+#Trouble with slow AWS load
+options(
+  shiny.server = list(
+    app_init_timeout = 360,  # 60 seconds is default
+    app_idle_timeout = 3600  # 3600 seconds (1 hour)
+  )
+)
+
 ## Big annotation files are choking shiny! plain csv files  too big for github
 ## use pigz to speedup the load of default gz compressed rds tables
 readRDS.gz <- function(file) {
@@ -26,9 +34,10 @@ readRDS.gz <- function(file) {
   return(object)
 }
 
-hg19       <- readRDS.gz("hg19_GDA.rds");
-hg19$epic  <- readRDS.gz("hg19_EPIC.long.rds")
 
+
+hg19      <- readRDS.gz("hg19_GDA.rds");
+hg19$epic <- readRDS.gz("hg19_EPIC.long.rds");
 
 GDA  <- setDT(hg19$gdav1);
 EPIC <- setDT(hg19$epic);
@@ -40,8 +49,6 @@ generate_unique_rs_ids <- function(column) {
   unique_rs_ids        <- as.character(factor(individual_rs_ids, levels = unique(individual_rs_ids)))
   return(unique_rs_ids)
 };
-#epicuniverse <- generate_unique_rs_ids(hg19$epic$Name); 
-
 
 chipinfolong = data.frame(
   "Chip" = c(
@@ -143,7 +150,6 @@ search_snps_table <- function(hg19, snp_ids) {
     epic_matches$Chip <- "EPIC"
     search_results$EPIC <- epic_matches
   }
-  
   return(search_results)
 }
 
@@ -182,7 +188,6 @@ ui <- navbarPage(
                plotOutput("barsPlots", height = 300)
              ),
              mainPanel(
-               h4(a("UpSetR  diagram", href = "https://upset.app/")),
                column(width = 12, align = "left", 
                       uiOutput("venDiagramText"),
                       plotOutput("venDiagram", width = "100%", height = "450px") 
@@ -356,11 +361,12 @@ server <- function(input, output) {
     
     
     # Search for SNPs
-    snptablesextract <- do.call(rbind, search_snps_table(hg19, snp_ids));  ## Slow function need to fix 
+    snptablesextract <- do.call(rbind, search_snps_table(hg19, snp_ids));  
     SNPSRESULTS=c();
     SNPSRESULTS$GDA  <- unlist(snptablesextract[which(snptablesextract$Chip == "GDA"),]$Name);
-    ALLEPICRSID      <- generate_unique_rs_ids(snptablesextract[which(snptablesextract$Chip == "EPIC"), ]$Name);
-    SNPSRESULTS$EPIC <- ifelse(length(snp_ids[snp_ids %in% ALLEPICRSID]) > 0, NA, snp_ids[snp_ids %in% ALLEPICRSID])
+    SNPSRESULTS$EPIC <- unlist(snptablesextract[which(snptablesextract$Chip == "EPIC"),]$Name);    
+#    ALLEPICRSID      <- generate_unique_rs_ids(snptablesextract[which(snptablesextract$Chip == "EPIC"), ]$Name);
+#    SNPSRESULTS$EPIC <- ifelse(length(snp_ids[snp_ids %in% ALLEPICRSID]) > 0, NA, snp_ids[snp_ids %in% ALLEPICRSID])
 
     output$snpsupset <- renderPlot({
       req(input$submitSNPs)
@@ -544,7 +550,7 @@ server <- function(input, output) {
               tags$strong("Bar Plots:"),
               tags$ul(
                 tags$li("Bar plots will display the count of markers associated with the entered gene(s) on each microarray chip (GDA or EPIC)."),
-                tags$li("Note: on the barplots GDA array shows unique rs-ids matched to gene symbol and  for EPIC array bar show number of cpg probes for the gene).")
+                tags$li("Note: on the barplots GDA array shows unique rs-ids matched to gene symbol and  for EPIC array bar shows number of cpg probes for the gene).")
               )
             ),
             tags$li(
@@ -565,18 +571,24 @@ server <- function(input, output) {
          ),
          h4("Contacts and credits:"),
            tags$ol(
-                tags$strong("Developers:"),
-                tags$ul(
-                  tags$li("Rust Turakulov: rust.turakulov@agrf.org.au "),
-                  tags$li("Lesley Gray: lesley.gray@agrf.org.au ")
-                ),
-                tags$strong("Genotyping team:"),
+             tags$strong("AGRF Sales:"),
+             tags$ul(
+               tags$li("Desley Pitcher: desley.pitcher@agrf.org.au")
+             ),             
+             tags$strong("AGRF Genotyping:"),
                   tags$ul(
-                   tags$li("Melinda Ziino: melinda.ziino@agrf.org.au ")
-                  )
-               )
+                   tags$li("Melinda Ziino: melinda.ziino@agrf.org.au")
+             ),
+             tags$strong("Developers:"),
+             tags$ul(
+               tags$li("Lesley Gray: lesley.gray@agrf.org.au"),
+               tags$li("Rust Turakulov: rust.turakulov@agrf.org.au")
              )
-          )
+           )
+        )
+      )
+    }else{
+      h4(a("UpSetR  diagram", href = "https://upset.app/"))
     }
   })
   
