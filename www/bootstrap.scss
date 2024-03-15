@@ -1,6 +1,8 @@
 $prefix: bs- !default; // BS5 CSS variable prefix
 
-
+.nav-tabs > li > a {
+  font-size: 60px; 
+}
 
 //* { font-family: "Proxima Nova Lt"; } 
 @import url('https://fonts.googleapis.com/css?family=Proxima+Nova');
