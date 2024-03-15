@@ -7,29 +7,15 @@ library(gridExtra);
 library(data.table)
 library(DT);
 library(kableExtra);
-library("formattable");
+library(formattable);
 library(UpSetR);
 library(ComplexHeatmap);
-
-## Big annotation files are choking shiny! plain csv files  too big for github
-## use pigz to speedup the load of default gz compressed rds tables
-readRDS.gz <- function(file) {
-  pigzAvail <- !(Sys.which("pigz")=="")
-  if (pigzAvail) {
-    con    <- pipe(paste0("pigz -d -c -p", 4, " ", file))
-    object <- base::readRDS(file = con)
-    close(con)
-  } else {
-    warning("pigz is not available. Falling back to regular readRDS()")
-    object <- readRDS(file)
-  }
-  return(object)
-}
-
-hg19       <- readRDS.gz("hg19_GDA.rds");
-hg19$epic  <- readRDS.gz("hg19_EPIC.long.rds")
+library(bslib);
 
 
+hg19gda  <- readRDS("hg19_GDA.rds");
+hg19epic <- readRDS("hg19_EPIC.rds");
+hg19 <- c(hg19gda, hg19epic)
 GDA  <- setDT(hg19$gdav1);
 EPIC <- setDT(hg19$epic);
 
@@ -65,23 +51,10 @@ chipinfolong = data.frame(
 
 # Function to generate bar plots
 generateBarCharts <- function(gene) {
-  EPIClong <- EPIC[grep(paste0("^", gene, "|,\\s+", gene),   EPIC$"Gene(s)", perl = TRUE), ]
-  EPICshort <- EPIClong %>%
-    group_by(`Transcript(s)`) %>%
-    summarise(
-      Chr             = first(Chr),
-      MapInfo         = first(MapInfo),      
-      Name            = paste(Name, collapse = ","),
-      "Transcript(s)" = first(`Transcript(s)`),    
-      "Gene(s)"       = first(`Gene(s)`),
-      misc            = first(misc)
-    ) %>%
-    ungroup()
-  
   
   SEARCHRESULTS <- list(
     GDA      = GDA[grep(paste0("^", gene, "|,\\s+", gene),    GDA$"Gene(s)", perl = TRUE), ],
-    EPIC     = EPICshort
+    EPIC     = EPIC[grep(paste0("^", gene, "|,\\s+", gene),   EPIC$"Gene(s)", perl = TRUE), ]
   )
   
   chip_data <- data.frame(cbind(Chip = names(SEARCHRESULTS), SNP_count = as.numeric(lapply(SEARCHRESULTS, nrow))))
@@ -129,23 +102,28 @@ generateBarCharts <- function(gene) {
 
 search_snps_table <- function(hg19, snp_ids) {
   search_results <- list()
-  
-  # Filter GDA data
-  gda_matches <- hg19$gdav1[hg19$gdav1$Name %in% snp_ids, ]
-  if (nrow(gda_matches) > 0) {  
-    gda_matches$Chip <- "GDA"
-    search_results$GDA <- gda_matches
+  if (length(snp_ids) == 0) {
+    return(search_results)
   }
+  gdamatches <- hg19$gdav1[hg19$gdav1$Name %in% snp_ids, ]
+  if (nrow(gdamatches) > 0) {  
+          gdamatches$Chip <- "GDA"
+          search_results$GDA <- gdamatches
+  };
+  rswithcomma <- paste0(snp_ids, ",", sep="" );
+  contains_rs_ids <- sapply(EPIC$Name, function(x) any(grepl(paste(rswithcomma, collapse = "|"), x)));
+#  contains_rs_ids <- sapply(hg19$epic$Name, function(x) any(grepl(paste(rs_ids, collapse = "|"), x))) ## slow on long lists
   
-  # Filter EPIC data
-  epic_matches <-  hg19$epic[hg19$epic$Name %in% snp_ids, ]
-  if (nrow(epic_matches) > 0) {  
-    epic_matches$Chip <- "EPIC"
-    search_results$EPIC <- epic_matches
-  }
-  
+  epicmatches <- hg19$epic[contains_rs_ids, ];
+  if (nrow(epicmatches) > 0) {  
+    epicmatches$Chip    <- "EPIC";
+    search_results$EPIC <- epicmatches;
+  };
+
   return(search_results)
+  
 }
+
 
 # Add cosmo theme and customise for AGRF with CSS
 agrf <- bs_theme(version=4, bootswatch="cosmo") %>%
@@ -160,8 +138,8 @@ ui <- fluidPage(
   
   # Add banner 
   headerPanel(
-    column(width = 12,align="center", div(style = "height: 0px; position: relative; margin-left: auto; margin-right: auto;"),
-           tags$img(src = "agrflogo.png", width="18%", height="100%"))
+      column(width = 12,align="center", div(style = "height: 0px; position: relative; margin-left: auto; margin-right: auto;"),
+             tags$img(src = "agrflogo.png", width="18%", height="100%"))
   ),
   
   # Add double Helix banner
@@ -171,21 +149,21 @@ ui <- fluidPage(
   )),
   
   navbarPage(
-    tags$style(HTML("
-           table.table-striped {
+    tags$style(HTML("table.table-striped {
                 width: 100% !important;
                 margin-left: 0 !important; /* Align table to the left */
                 padding: 0 !important; /* Remove any padding */
                 margin-right: 0 !important; /* Remove any right margin */                
             }
          ")),
-
+  
   title = tags$span(imageOutput("logo", height = "10", inline = FALSE), " GT CHIPS ", style = "color: white; font-size: 2px; font-weight: regular;"),
   
   tabPanel("Genes",
 #           imageOutput("logo", height = "10", inline = TRUE),
            sidebarLayout(
              sidebarPanel(
+               #style = "height: 275px;",
                style = "height: auto; width: 12, margin-top: 20; margin-bottom: 200",
                h5("Enter refSeq gene id(s) into the field separated by commas. Note the search is case sensitive."),
                textInput("geneInput", "Enter Gene(s):", ""),
@@ -200,23 +178,25 @@ ui <- fluidPage(
                uiOutput("dynamicPlotHeight"),
                plotOutput("barsPlots", height = 300)
              ),
+             div(id = "main",
+                 
+             # This styling stops images from pushing underneath sidebar
              mainPanel(width = 12, style = "margin-right: -200px;  position: absolute",
                h4(a("UpSetR  diagram", href = "https://upset.app/", style = "margin-top: 20px; margin-bottom: 20px)")),
-               column(width = 12, align = "left", 
-                      uiOutput("venDiagramText"),
-                      plotOutput("venDiagram", width = "100%", height = "450px") 
+               column(8, align = "left", 
+                      plotOutput("venDiagram", width = "80%", height = "300px")
                ),
                
                br(),
                hr(),
                h4("Table with all matched SNPs detected in all selected genes"),
-               column(8, align = "left", style = "height: 0px; margin-left: 0; margin-right: -200px;",
-               DTOutput("longtable")
+               column(8, align = "left", 
+                     style = "height: 0px; margin-left: 0; margin-right: -200px;",
+               DTOutput("longtable"))
              ),
              fluid = FALSE
-           ) %>% shinyjs::hidden()
+             ) %>% shinyjs::hidden()
            )),
-
   tabPanel("SNPs",
            sidebarLayout(
              sidebarPanel(
@@ -233,7 +213,6 @@ ui <- fluidPage(
                br(),
                hr(),
                
-               
                plotOutput("heatmap_plot", height = 600)
              ),
              mainPanel(
@@ -247,7 +226,7 @@ ui <- fluidPage(
                h4("Table with all matched SNPs detected in all selected genes"),
                DTOutput("snpstable"),
 
-             )
+             ) 
            )
   ),
   tabPanel("Info", 
@@ -293,7 +272,7 @@ SNPSRESULTS        <- reactiveVal(NULL)
 # Define server logic
 server <- function(input, output) {
   shinyjs::useShinyjs()
-
+  
   output$logo <- renderImage({
     list(src = "agrflogo.png",  width = "220px", height = "50px", alt = "logo")
   }, deleteFile = FALSE);
@@ -413,8 +392,8 @@ server <- function(input, output) {
                                     list(extend = 'colvis', text = 'Column Visibility'),
                                     list(extend = 'copy', text = 'Copy',   filename = 'AGRF_GTChips_matchtable_hg19'),
                                     list(extend = 'csv', text = 'CSV',     filename = 'AGRF_GTChips_matchtable_hg19'),
-                                    list(extend = 'excel', text = 'Excel', filename = 'AGRF_GTChips_matchtable_hg19')
-                                  #  list(extend = 'pdf', text = 'PDF',     filename = 'AGRF_GTChips_matchtable_hg19')
+                                    list(extend = 'excel', text = 'Excel', filename = 'AGRF_GTChips_matchtable_hg19'),
+                                    list(extend = 'pdf', text = 'PDF',     filename = 'AGRF_GTChips_matchtable_hg19')
                                 )),
                                 rownames  = FALSE) %>%
                          formatStyle(columns = c(2, 4), fontSize = '75%')
@@ -429,7 +408,7 @@ server <- function(input, output) {
     snptablesextract$Chip      <- as.character(snptablesextract$Chip)
     HEATMX <-  as.data.frame.matrix(table(snptablesextract$`Gene(s)`, snptablesextract$Chip))
     if (ncol(HEATMX) < 2) {
-      missing_cols <- setdiff(c("GDA", "EPIC"), colnames(HEATMX))
+      missing_cols <- setdiff(names(hg19), colnames(HEATMX))
       for (mycol in missing_cols) {
           HEATMX[, mycol] <- rep(0, nrow(HEATMX))
         }
@@ -527,7 +506,7 @@ server <- function(input, output) {
     if (!is.null(all_SEARCHRESULTS()) && length(all_SEARCHRESULTS()) > 0) {
       flattened_SEARCHRESULTS <- do.call(rbind, lapply(all_SEARCHRESULTS(), as.data.frame))
       datatable(flattened_SEARCHRESULTS,
-                caption = ' long list of search results across both chips annotations in vertical format ',
+                caption = ' long list of search results across four chips annotation in vertical format ',
                 extensions = 'Buttons',
                 options = list(autoWidth = FALSE,
                                lengthMenu = list(c(10, 50, 100, 500, -1), c('10', '50', '100', '500', 'All')),
@@ -554,57 +533,6 @@ server <- function(input, output) {
     }
   })
   
-  output$venDiagramText <- renderUI({
-    if (is.null(all_SEARCHRESULTS())) {
-      fluidRow(
-        column(
-          width = 12,
-          h4("Test Instructions:"),
-          tags$ol(
-            tags$li("Enter the symbol or multiple symbols of the gene(s) you wish to search for in the ", tags$code("Enter Gene(s):"), " text input box on the left side of the application. For example" , tags$code("NF1, BRAF") ),
-            tags$li("Click the ", tags$strong("Generate plots"), " button located below the input box.")
-          ),
-          h4("Expected Output:"),
-          tags$ol(
-            tags$li(
-              tags$strong("Bar Plots:"),
-              tags$ul(
-                tags$li("Bar plots will display the count of markers associated with the entered gene(s) on each microarray chip (GDA or EPIC)."),
-                tags$li("Note: on the barplots GDA array shows unique rs-ids matched to gene symbol and  for EPIC array bar show number of cpg probes for the gene).")
-              )
-            ),
-            tags$li(
-              tags$strong("UpSetR Diagram:"),
-              tags$ul(
-                tags$li("The UpSetR diagram illustrates the overlap of markers between the EPIC and GDA arrays."),
-                tags$li("This diagram is rs id oriented no cpg probes from EPIC array used. RS-id collected from EPIC annotation within 1kb distances from all gene matched cpg probes.")
-              )
-            ),
-            tags$li(
-              tags$strong("Table with Matched SNPs:"),
-              tags$ul(
-                tags$li("A table will show detailed information about the matched markers, including their ID, chip, chromosome, and map info."),
-                tags$li("You can export table or copy it to the buffer however the only visible rows and columns will be collected"),
-                tags$li("Table column and row number visibility can be adjusted at the left side corner of the table.") 
-              )
-            )
-         ),
-         h4("Contacts and credits:"),
-           tags$ol(
-                tags$strong("Developers:"),
-                tags$ul(
-                  tags$li("Rust Turakulov: rust.turakulov@agrf.org.au "),
-                  tags$li("Lesley Gray: lesley.gray@agrf.org.au ")
-                ),
-                tags$strong("Genotyping team:"),
-                  tags$ul(
-                   tags$li("Melinda Ziino: melinda.ziino@agrf.org.au ")
-                  )
-               )
-             )
-          )
-    }
-  })
   
   output$venDiagram <- renderPlot({
     if (!is.null(all_SEARCHRESULTS())) {
@@ -615,13 +543,16 @@ server <- function(input, output) {
         EPIC = generate_unique_rs_ids(venn_epic$Name)
       )
       
-      upset(fromList(venn_data), main.bar.color = "royalblue", sets.bar.color="navy", nsets = 2,  text.scale=2)
-     
-
+     venn_plot <- upset(fromList(venn_data), main.bar.color = "royalblue", sets.bar.color="navy", nsets = 2,  text.scale=2)
+      
+      venn_plot
+      
+      #grid.draw(venn_plot)
+      
     } else {
       plot(NULL, xlim = c(0, 1), ylim = c(0, 1), axes = FALSE, ann = FALSE)
     }
-  })
+  }, bg = "transparent")
   
   output$smalltable <- renderTable({
     flattened_SEARCHRESULTS <- if (!is.null(all_SEARCHRESULTS())) {
