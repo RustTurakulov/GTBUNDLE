@@ -165,11 +165,14 @@ agrf <- bs_theme(version=4, bootswatch="cosmo", tab_font_size = "60px") %>%
 ui <- fluidPage(  
   theme = agrf,
   useShinyjs(),
+
+  titlePanel(title = "", windowTitle =  " GT CHIPS "),
   
   # Add banner 
   headerPanel(
     column(width = 12,align="center", div(style = "height: 0px; position: relative; margin-left: auto; margin-right: auto;"),
-           tags$img(src = "agrflogo.png", width="18%", height="100%"))
+           tags$img(src = "agrflogo.png", width="18%", height="100%")
+    )
   ),
 
   
