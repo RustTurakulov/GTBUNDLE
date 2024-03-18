@@ -1,4 +1,5 @@
 library(bslib);
+library(png);
 library(dplyr);
 library(tidyr);
 library(shiny);
@@ -302,15 +303,7 @@ server <- function(input, output) {
     list(src = "agrflogo.png",  width = "220px", height = "50px", alt = "logo")
   }, deleteFile = FALSE);
   
-  output$showSpinner <- renderUI({
-    if (showSpinner()) {
-      div(class = "loader")
-    } else {
-      NULL
-    }
-  })
-  
-  
+
   #  output$chipinfolong_table <- renderDT({
   output$chipinfolong_table <- function() {
     req(chipinfolong)
@@ -517,13 +510,22 @@ server <- function(input, output) {
       print(grid.arrange(grobs = barPlots(), ncol = 1, heights = plot_heights))
     } else {
       # If no plots, create an empty plot
-      plot(NULL, xlim = c(0, 1), ylim = c(0, 1), axes = FALSE, ann = FALSE)
+#      plot(NULL, xlim = c(0, 1), ylim = c(0, 1), axes = FALSE, ann = FALSE)
+      bg_image <- readPNG("www/agrfwebbanner.png")
+      scatter_plot <- ggplot(data = data.frame(x=c(0,1), y=c(1,0)), aes(x = x, y = y)) +
+        geom_point(shape = 21, colour = "white", fill = "white", size = 0.2) +  
+        annotation_custom(rasterGrob(bg_image, width = unit(1, "npc"), height = unit(1, "npc")), 
+                          xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) + 
+        theme_void() +  # Remove default theme elements
+        theme(plot.margin = margin(0, 0, 0, 0))
+      print(scatter_plot)
     }
   }, height = function() {
     # Set the overall height dynamically based on the number of genes
     300 + length(barPlots()) * 150  # Adjust the multiplier as needed
   });
-  
+
+    
   
   output$longtable <- renderDT({
     if (!is.null(all_SEARCHRESULTS()) && length(all_SEARCHRESULTS()) > 0) {
@@ -641,10 +643,10 @@ server <- function(input, output) {
     if (nrow(flattened_SEARCHRESULTS) > 0) {
       summary_table_data <- data.frame(Chip = flattened_SEARCHRESULTS$Chip, SNPs = 1)
       summary_table_data <- aggregate(SNPs ~ Chip, data = summary_table_data, length)
-      colnames(summary_table_data) <- c("Chip", "SNPs")  
+      colnames(summary_table_data) <- c("Chip", "Probes")  
       summary_table_data <- merge(summary_table_data, chipinfolong[, c("Chip", "Name")], by="Chip")
-      
-      
+  
+    
       return(summary_table_data)
     } else {
       return(data.frame(Chip = character(), SNPs = integer()))
