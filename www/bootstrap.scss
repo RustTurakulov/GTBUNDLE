@@ -1,14 +1,23 @@
 $prefix: bs- !default; // BS5 CSS variable prefix
 
-.nav-tabs > li > a {
-  font-size: 60px; 
+$tab-nav-bg-color: #009FDF; 
+.your-tab-nav-class {
+  background-color: $tab-nav-bg-color;
 }
 
-//* { font-family: "Proxima Nova Lt"; } 
-@import url('https://fonts.googleapis.com/css?family=Proxima+Nova');
 
-//* { font-family: Proxima Nova; } - isn't working, have tried css2
-* { font-family: sans-serif; }
+@font-face {
+        font-family: ProximaNova;
+        src: url("./www/ProximaNova-Bold.otf") format("opentype");
+        font-weight: bold;
+}
+
+@font-face {
+        font-family: ProximaNova;
+        src: url("./www/ProximaNova-Light.otf") format("opentype");
+        font-weight: 300;
+}
+
 
 .proximanova-title {
   color: white;
@@ -18,35 +27,50 @@ $prefix: bs- !default; // BS5 CSS variable prefix
   font-size: x-large;
 }
 
-.fancybanner {
-  margin-top: 0;
-}
 
-.button {
-  position: absolute;
-  top:50%;
-  background-color:#0a0a23;
-  color: #fff;
-  border:none; 
-  border-radius:10px; 
-  padding:15px;
-  min-height:30px; 
-  min-width: 120px;
+/* Smaller buttons */
+.dt-buttons.btn-group button {
+  font-size: 10px;
 }
 
 
+/* Smaller font size */
+.dataTable th,
+.dataTable td {
+  font-size: 10px;
+}
 
-// .h1.title{color: #00551D; font-weight: bold;}
-// .h1{color: #00551D; font-weight: bold;}
+/* Smaller buttons */
+.dt-button {
+  font-size: 10px;
+  padding: 6px 6px;
+}
+
+
+#plotButton {
+  background-color: #ED8B00 !important; /* Change the background color */
+  color: white !important; /* Change the text color #75787B #ED8B00 */
+  border-color: #ED8B00 !important; /* Change the border color */
+}
+
+#submitSNPs {
+  background-color: #ED8B00 !important; /* Change the background color */
+  color: white !important; /* Change the text color #75787B #ED8B00 */
+  border-color: #ED8B00 !important; /* Change the border color */
+}
+
+
 
 // For BS3, which doesn't have these Sass variables (but has other, similar ones)
-$border-width: 1px !default;
+$brand-info: #ED8B00 !default;
+$border-width: 2px !default;
 $border-radius: $border-radius-base !default;
 $border-color: mix($body-bg, $text-color, 70%) !default;
 $primary: $brand-primary !default;
 $info: $brand-info !default;
 $warning: $brand-warning !default;
 $danger: $brand-danger !default;
+ 
 
 // No rgb CSS vars available in BS3-4
 $primary-rgb: var(--#{$prefix}primary-rgb, red($primary),green($primary),blue($primary)) !default;
@@ -59,7 +83,7 @@ $shiny-emphasis-color-rgb:          var(--#{$prefix}emphasis-color-rgb, 0,0,0) !
 $shiny-disconnected-bg:             RGBA($shiny-emphasis-color-rgb, 0.42) !default;
 $shiny-table-na:                    RGBA($shiny-emphasis-color-rgb, 0.46) !default;
 $shiny-error-validated-color:       RGBA($shiny-emphasis-color-rgb, 0.5) !default;
-$shiny-progress-text-bg-color:      RGBA($primary-rgb, 0.05) !default;
+$shiny-progress-text-bg-color:      RGBA($primary-rgb, 2.5) !default;
 $shiny-input-panel-bg:              RGBA($shiny-emphasis-color-rgb, 0.04) !default;
 $shiny-input-panel-border:          $border-width solid var(--#{$prefix}border-color, $border-color) !default;
 $shiny-input-panel-border-radius:   $border-radius !default;
@@ -88,4 +112,4 @@ $datepicker-disabled-color:         $dropdown-link-disabled-color !default;
 }
 
 // TODO: should this be changed to danger?
-//$shiny-error-color:                 red !default;
+//$shiny-error-color:        red !default;
