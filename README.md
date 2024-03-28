@@ -1,6 +1,6 @@
-# GTBUNDLE Genotyping and Methylation Array Content Search
+# Find My SNP -- The Genotyping and Methylation Array Content Search
 
-**GTBUNDLE** is a Shiny web application designed to provide users with a friendly interface for searching, comparing, and analyzing the content of two Illumina's mainstream genotyping and methylation chips: GDA and EPICv2.
+**Find my SNP** is a Shiny web application designed to provide users with a friendly interface for searching, comparing, and analyzing the content of two Illumina's mainstream genotyping and methylation chips: GDA and EPICv2.
 
 ### Deployment and Running Instructions:
 
