@@ -19,6 +19,22 @@ Install Required Packages: Before running the application, ensure that you have 
 R
 install.packages(c("dplyr", "tidyr", "shiny", "shinyjs", "ggplot2", "gridExtra", "data.table", "DT", "kableExtra", "formattable", "UpSetR", "ComplexHeatmap"))
 ```
+Download large uncompressed csv files with annotation from here
+
+```
+http://rcombination.com:8888/findmysnp_supplements/
+
+cyto.csv                                           28-Mar-2024 03:51            78888142
+epic.csv                                           28-Mar-2024 03:53           537777815
+gdav1.csv                                          28-Mar-2024 03:53           131391524
+gdav1cyto.csv                                      28-Mar-2024 03:54           144552374
+gsav3.csv                                          28-Mar-2024 03:54            44492080
+gsav3as.csv                                        28-Mar-2024 03:54            41204403
+gsav3md.csv                                        28-Mar-2024 03:54            43557237
+gsav3ps.csv                                        28-Mar-2024 03:54            4735432
+
+```
+Those files are too big to put straight on gitHub even compressed. Compressed files makes loading of aplication way too slow even with mutithreaded decompression.  
 
 ### Run the Application: 
 
