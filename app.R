@@ -293,7 +293,13 @@ server <- function(input, output) {
                                  pageLength = 10, ## length of the table
                                  buttons = list(
                                    list(extend = 'colvis', text = 'Column Visibility'),
-                                   list(extend = 'collection', text = 'Export', buttons = c('copy', 'csv', 'excel', 'pdf'))
+                                   list(extend = 'collection', text = 'Export', 
+                                     buttons = list(
+                                       list(extend = 'copy',   filename = 'AGRF_findmysnp_hg19table'),
+                                       list(extend = 'csv',    filename = 'AGRF_findmysnp_hg19table'),
+                                       list(extend = 'excel',  filename = 'AGRF_findmysnp_hg19table'),
+                                       list(extend = 'pdf',    filename = 'AGRF_findmysnp_hg19table')
+                                  ))
                                  )),
                   rownames  = FALSE) %>%
           formatStyle(columns = c( 1,2 ), fontSize = '75%')
@@ -430,7 +436,13 @@ server <- function(input, output) {
                                pageLength = 10,
                                buttons = list(
                                  list(extend = 'colvis', text = 'Column Visibility'),
-                                 list(extend = 'collection', text = 'Export', buttons = c('copy', 'csv', 'excel', 'pdf'))
+                                 list(extend = 'collection', text = 'Export', 
+                                      buttons = list(
+                                        list(extend = 'copy',   filename = 'AGRF_findmysnp_hg19table'),
+                                        list(extend = 'csv',    filename = 'AGRF_findmysnp_hg19table'),
+                                        list(extend = 'excel',  filename = 'AGRF_findmysnp_hg19table'),
+                                        list(extend = 'pdf',    filename = 'AGRF_findmysnp_hg19table')
+                                      ))
                                )),
                 rownames  = FALSE) %>%
         formatStyle(columns = c(2, 4), fontSize = '75%')
@@ -558,10 +570,9 @@ options(
 )
 
 hg19           <- c();
-## Arrow library part is little bit faster load
-#epic_csv   <- open_dataset(  sources = "epic.csv",  format = "csv");
-#epic_csv   <- open_dataset("epic_parquet/");  #the fastest
-#hg19$epic  <- as.data.frame(epic_csv);
+#epic_csv <- open_dataset(sources = "epic.csv", format = "csv");
+#epic_csv       <- open_dataset("epic_parquet/"); #faster
+#hg19$epic      <- as.data.frame(epic_csv);
 
 hg19$epic      <- fread("epic.csv");
 hg19$gsav3     <- fread("gsav3.csv");
